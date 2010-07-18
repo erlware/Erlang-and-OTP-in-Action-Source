@@ -7,5 +7,4 @@ all:
 	gcc -o ./priv/parser \
 	  -I$(OTPROOT)/lib/erl_interface-3.6.5/include \
 	  -L$(OTPROOT)/lib/erl_interface-3.6.5/lib \
-	  ./c_src/parser.c \
-	  -lerl_interface_st -lei_st
+	  ./c_src/parser.c -lerl_interface_st -lei_st
