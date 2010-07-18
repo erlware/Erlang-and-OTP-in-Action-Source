@@ -79,10 +79,10 @@ handle_cast(stop, State) ->
     {stop, normal, State}.
 
 handle_info({Port, {exit_status, Status}}, #state{port=Port}=State) ->
-    error_logger:format("port exited with status ~p; restarting",
+    error_logger:format("port exited with status ~p; restarting~n",
                         [Status]),
-    Port = create_port(),
-    {noreply, State#state{port=Port}}.
+    NewPort = create_port(),
+    {noreply, State#state{port=NewPort}}.
 
 terminate(_Reason, _State) ->
     ok.
@@ -95,6 +95,11 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 
 create_port() ->
-    PrivDir = code:priv_dir(?APPNAME),
-    open_port({spawn, filename:join([PrivDir, "ktuo_parser"])},
-              [binary, {packet, 4}, exit_status]).
+    case code:priv_dir(?APPNAME) of
+        {error, _} -> 
+            error_logger:format("~w priv dir not found~n", [?APPNAME]),
+            exit(error);
+        PrivDir ->
+            open_port({spawn, filename:join([PrivDir, "parser"])},
+                      [binary, {packet, 4}, exit_status])
+    end.
