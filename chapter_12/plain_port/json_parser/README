@@ -1,6 +1,15 @@
-To build this code, run the following command:
+To build the Erlang code, run the following command:
 
 erlc -o ./ebin ./src/*.erl
+
+To build the C code using gcc, run the following:
+
+gcc -o ./priv/parser -I$(OTPROOT)/lib/erl_interface-3.6.5/include -L$(OTPROOT)/lib/erl_interface-3.6.5/lib ./c_src/parser.c -lerl_interface_st -lei_st
+
+(OTPROOT is typically /usr/lib/erlang. Check what your version of
+erl_interface is and that the include and lib directories exist and contain
+the expected header files and library files - not all Erlang distributions
+ship these development files in the basic installation package.)
 
 To run the program, first start Erlang like this:
 
