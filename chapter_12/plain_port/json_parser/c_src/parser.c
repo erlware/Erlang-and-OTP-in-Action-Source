@@ -1,4 +1,6 @@
-
+/*
+  Erlang port program for interfacing with the YAJL JSON parser
+*/
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -7,12 +9,10 @@
 
 #include <yajl/yajl_parse.h>
 
-
 static int handle_null(void * ctx);
 static int handle_boolean(void * ctx, int boolean);
 static int handle_integer(void * ctx, long integerVal);
 static int handle_double(void * ctx, double doubleVal);
-/* static int handle_number(void * ctx, const char * s, unsigned int l); */
 static int handle_string(void * ctx, const unsigned char * stringVal,
                          unsigned int stringLen);
 static int handle_map_key(void * ctx, const unsigned char * stringVal,
@@ -36,6 +36,7 @@ static yajl_callbacks callbacks = {
   handle_end_array
 };
 
+/*
 void *alloc_func(void *ctx, unsigned int sz)
 {
   return malloc(sz);
@@ -57,6 +58,7 @@ static yajl_alloc_funcs alloc_funcs = {
   free_func,
   NULL
 };
+*/
 
 int main(int argc, char **argv)
 {
@@ -68,12 +70,12 @@ int main(int argc, char **argv)
   };
   yajl_handle hand;
   yajl_status stat;
-  int done = 0;
   static unsigned char fileData[65536];
+  int done = 0;
   size_t rd;
 
-  hand = yajl_alloc(&callbacks, &cfg, &alloc_funcs, NULL);
-
+  /* hand = yajl_alloc(&callbacks, &cfg, &alloc_funcs, NULL); */
+  hand = yajl_alloc(&callbacks, &cfg, NULL, NULL);
   while (!done) {
     rd = fread((void *) fileData, 1, sizeof(fileData) - 1, stdin);
     fileData[rd] = 0; /* zero-terminate the read data */
@@ -94,11 +96,8 @@ int main(int argc, char **argv)
       unsigned char *str = yajl_get_error(hand, 1, fileData, rd);
       fprintf(stderr, "%s\n", (const char *)str);
       yajl_free_error(hand, str);
-    } else {
-      fprintf(stderr, "flushing...\n");
     }
   }
-
   yajl_free(hand);
 
   return 0;
