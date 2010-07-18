@@ -1,3 +1,7 @@
+
+#include <stdlib.h>
+#include <stdio.h>
+
 #include "erl_interface.h"
 #include "ei.h"
 
@@ -19,77 +23,157 @@ static int handle_start_array(void * ctx);
 static int handle_end_array(void * ctx);
 
 static yajl_callbacks callbacks = {
-    handle_null,
-    handle_boolean,
-    handle_integer, /* only handles long integers, not bignums */
-    handle_double,
-    NULL, /* any number - if defined, integer/double are not used */
-    handle_string,
-    handle_start_map,
-    handle_map_key,
-    handle_end_map,
-    handle_start_array,
-    handle_end_array
+  handle_null,
+  handle_boolean,
+  handle_integer, /* only handles long integers, not bignums */
+  handle_double,
+  NULL, /* any number - if defined, integer/double are not used */
+  handle_string,
+  handle_start_map,
+  handle_map_key,
+  handle_end_map,
+  handle_start_array,
+  handle_end_array
 };
 
+void *alloc_func(void *ctx, unsigned int sz)
+{
+  return malloc(sz);
+}
+
+void *realloc_func(void *ctx, void *ptr, unsigned int sz)
+{
+  return realloc(ptr, sz);
+}
+
+void free_func(void *ctx, void *ptr)
+{
+  free(ptr);
+}
+
+static yajl_alloc_funcs alloc_funcs = {
+  alloc_func,
+  realloc_func,
+  free_func,
+  NULL
+};
 
 int main(int argc, char **argv)
 {
-    erl_init(NULL, 0);
+  erl_init(NULL, 0); /* initialize erl_interface */
+  
+  yajl_parser_config cfg = {
+    1, /* allow comments */
+    0  /* don't check UTF-8 */
+  };
+  yajl_handle hand;
+  yajl_status stat;
+  int done = 0;
+  static unsigned char fileData[65536];
+  size_t rd;
 
-    return 0;
+  hand = yajl_alloc(&callbacks, &cfg, &alloc_funcs, NULL);
+
+  while (!done) {
+    rd = fread((void *) fileData, 1, sizeof(fileData) - 1, stdin);
+    fileData[rd] = 0; /* zero-terminate the read data */
+    if (rd == 0) {
+      if (!feof(stdin)) {
+        fprintf(stderr, "read error\n");
+        exit(1);
+      }
+      done = 1;
+    }
+    if (done) {
+      stat = yajl_parse_complete(hand);
+    } else {
+      stat = yajl_parse(hand, fileData, rd);
+    }
+    if ((stat != yajl_status_ok)
+        && (stat != yajl_status_insufficient_data)) {
+      unsigned char *str = yajl_get_error(hand, 1, fileData, rd);
+      fprintf(stderr, "%s\n", (const char *)str);
+      yajl_free_error(hand, str);
+    } else {
+      fprintf(stderr, "flushing...\n");
+    }
+  }
+
+  yajl_free(hand);
+
+  return 0;
 }
 
 
 static int handle_null(void * ctx)
 {
-    return 1;
+  /* TODO */
+  printf("Null.\n");
+  return 1;
 }
 
 static int handle_boolean(void * ctx, int boolean)
 {
-    return 1;
+  /* TODO */
+  printf("Boolean: %d\n", boolean);
+  return 1;
 }
 
 static int handle_integer(void * ctx, long integerVal)
 {
-    return 1;
+  /* TODO */
+  printf("Integer: %ld\n", integerVal);
+  return 1;
 }
 
 static int handle_double(void * ctx, double doubleVal)
 {
-    return 1;
+  /* TODO */
+  printf("Double: %f\n", doubleVal);
+  return 1;
 }
 
 static int handle_string(void * ctx, const unsigned char * stringVal,
-                           unsigned int stringLen)
+                         unsigned int stringLen)
 {
-    return 1;
+  /* TODO */
+  printf("String: '%.*s'\n", stringLen, stringVal);
+  return 1;
 }
 
 static int handle_map_key(void * ctx, const unsigned char * stringVal,
-                            unsigned int stringLen)
+                          unsigned int stringLen)
 {
-    return 1;
+  /* TODO */
+  printf("Map Key: '%.*s'\n", stringLen, stringVal);
+  return 1;
 }
 
 static int handle_start_map(void * ctx)
 {
-    return 1;
+  /* TODO */
+  printf("Start map.\n");
+  return 1;
 }
 
 
 static int handle_end_map(void * ctx)
 {
-    return 1;
+  /* TODO */
+  printf("End map.\n");
+  return 1;
 }
 
 static int handle_start_array(void * ctx)
 {
-    return 1;
+  /* TODO */
+  printf("Start array.\n");
+  return 1;
 }
 
 static int handle_end_array(void * ctx)
 {
-    return 1;
+  /* TODO */
+  printf("End array.\n");
+  return 1;
 }
