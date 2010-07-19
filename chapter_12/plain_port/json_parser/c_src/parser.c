@@ -4,11 +4,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "erl_interface.h"
-#include "ei.h"
+#include <erl_interface.h>
+#include <ei.h>
 
 #include <yajl/yajl_parse.h>
 
+/* yajl callback prototypes */
 static int handle_null(void * ctx);
 static int handle_boolean(void * ctx, int boolean);
 static int handle_integer(void * ctx, long integerVal);
@@ -25,9 +26,9 @@ static int handle_end_array(void * ctx);
 static yajl_callbacks callbacks = {
   handle_null,
   handle_boolean,
-  handle_integer, /* only handles long integers, not bignums */
+  handle_integer,  /* note: only handles long integers, not bignums */
   handle_double,
-  NULL, /* any number - if defined, integer/double are not used */
+  NULL,  /* any number - if defined, integer/double are not used */
   handle_string,
   handle_start_map,
   handle_map_key,
@@ -73,13 +74,18 @@ struct state {
 };
 
 
+#define ERR_READ         10
+#define ERR_READ_HEADER  11
+#define ERR_PACKET_SIZE  12
+#define ERR_DECODE       13
+#define ERR_BADARG       14
+
 size_t read_bytes(unsigned char *buf, size_t max, FILE *fd)
 {
   size_t n;
   n = fread(buf, 1, max, fd);
   if ((n == 0) && !feof(fd)) {
-    fprintf(stderr, "read error\n");
-    exit(1);
+    exit(ERR_READ);
   }
   buf[n] = 0; /* zero-terminate the read data */
   return n;
@@ -111,40 +117,35 @@ static ETERM *read_document(unsigned char *buf, size_t max, FILE *fd)
   n = read_bytes(hd, 4, fd);
   if (n != 4) {
     if (n == 0 && feof(fd)) return NULL;
-    fprintf(stderr, "error reading packet header\n");
-    exit(1);
+    exit(ERR_READ_HEADER);
   }
   /* the packet header is always in Network Byte Order */
   sz = (hd[0] << 24) + (hd[1] << 16) + (hd[2] << 8) + hd[3];
   if (sz > max) {
-    fprintf(stderr, "packet too big (%d bytes)\n", sz);
-    exit(1);
+    exit(ERR_PACKET_SIZE);
   }
-  n = read_bytes(buf, sz, stdin);
+  n = read_bytes(buf, sz, fd);
   if (n != sz) {
-    fprintf(stderr, "error reading %d bytes; got %d\n", sz, n);
-    exit(1);
+    exit(ERR_READ);
   }
   t = erl_decode(buf);
   if (t == NULL) {
-    fprintf(stderr, "could not decode document\n");
-    exit(1);
+    exit(ERR_DECODE);
   }
   if (!ERL_IS_BINARY(t)) {
-    fprintf(stderr, "document is not a binary\n");
-    exit(1);
+    exit(ERR_BADARG);
   }
   return t;
 }
 
-void write_error(const char *text)
+void write_error(const char *text, FILE *fd)
 {
   ei_x_buff x;
   ei_x_new_with_version(&x);
   ei_x_encode_tuple_header(&x, 2);
   ei_x_encode_atom(&x, "error");
   ei_x_encode_string(&x, text);
-  write_packet(&x, stdout);
+  write_packet(&x, fd);
   ei_x_free(&x);
 }
 
@@ -152,8 +153,6 @@ void write_error(const char *text)
 int main(int argc, char **argv)
 {
   erl_init(NULL, 0); /* initialize erl_interface */
-  ETERM *t;
-  struct state st;
 
   yajl_parser_config cfg = {
     1, /* allow comments */
@@ -161,28 +160,34 @@ int main(int argc, char **argv)
   };
   yajl_handle hand;
   yajl_status stat;
+
   static unsigned char buf[65536];
+  struct state st;
+  ETERM *t;
 
   while ((t = read_document(buf, sizeof(buf) - 1, stdin)) != NULL) {
     /* initialize the state and the output buffer */
     st.c = NULL;
     ei_x_new_with_version(&st.x);
-    ei_x_encode_tuple_header(&st.x, 2);
+
+    ei_x_encode_tuple_header(&st.x, 2); /* begin ok-result tuple */
     ei_x_encode_atom(&st.x, "ok");
+
     hand = yajl_alloc(&callbacks, &cfg, NULL, &st);
     stat = yajl_parse(hand, ERL_BIN_PTR(t), ERL_BIN_SIZE(t));
     if (stat == yajl_status_insufficient_data) {
       stat = yajl_parse_complete(hand);
     }
     if (stat == yajl_status_insufficient_data) {
-      write_error("unexpected end of document");
+      write_error("unexpected end of document", stdout);
     } else if (stat != yajl_status_ok) {
-      unsigned char *str = yajl_get_error(hand, 0, NULL, 0);
-      write_error(str);
-      yajl_free_error(hand, str);
+      unsigned char *msg = yajl_get_error(hand, 0, NULL, 0);
+      write_error(msg, stdout);
+      yajl_free_error(hand, msg);
     } else {
       write_packet(&st.x, stdout);
     }
+
     yajl_free(hand);
     ei_x_free(&st.x);
     erl_free(t);
@@ -267,6 +272,7 @@ static int handle_start(void * ctx, int array)
   struct state *st = (struct state *)ctx;
   struct container *c = malloc(sizeof(struct container));
   count_element(st);
+  /* link and initialize container struct */
   c->next = st->c;
   st->c = c;
   c->count = 0;
@@ -302,6 +308,7 @@ static int handle_end(void * ctx, int array)
     ei_encode_list_header(st->x.buff, &index, st->c->count);
     ei_x_encode_empty_list(&st->x);  /* also terminate the list */
   }
+  /* unlink and decallocate container struct */
   st->c = c->next;
   free(c);
   return 1;
