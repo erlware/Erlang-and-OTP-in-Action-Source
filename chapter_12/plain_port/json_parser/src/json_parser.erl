@@ -7,5 +7,6 @@
 
 -export([parse_document/1]).
 
-parse_document(Data) when is_binary(Data) ->
-    jp_server:parse_document(Data).
+%% @doc Parses a document that can be an io-list
+parse_document(Data) ->
+    jp_server:parse_document(iolist_to_binary(Data)).
