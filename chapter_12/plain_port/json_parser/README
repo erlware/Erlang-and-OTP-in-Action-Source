@@ -4,7 +4,7 @@ erlc -o ./ebin ./src/*.erl
 
 To build the C code using gcc, run the following:
 
-gcc -o ./priv/parser -I$(OTPROOT)/lib/erl_interface-3.6.5/include -I$(YAJLROOT)/include -L$(OTPROOT)/lib/erl_interface-3.6.5/lib -L$(YAJLROOT)/lib ./c_src/parser.c -lerl_interface_st -lei_st -lyajl
+gcc -o ./priv/parser -I${OTPROOT}/lib/erl_interface-3.6.5/include -I${YAJLROOT}/include -L${OTPROOT}/lib/erl_interface-3.6.5/lib -L${YAJLROOT}/lib ./c_src/parser.c -lerl_interface_st -lei_st -lyajl
 
 OTPROOT is typically /usr/lib/erlang. Check what your version of
 erl_interface is and that the include and lib directories exist and contain
@@ -12,6 +12,10 @@ the expected header files and library files - not all Erlang distributions
 ship these development files in the basic installation package. YAJLROOT is
 wherever your YAJL installation is. If you built YAJL but did not do 'make
 install', this will be something like lloyd-yajl-1.0.9-0/build/yajl-1.0.9/.
+
+For the YAJL shared library to be loaded at runtime, you may need to set the
+environment variable LD_LIBRARY_PATH to ${YAJLROOT}/lib if you did not
+install YAJL it in a standard location.
 
 To run the program, first start Erlang like this:
 
@@ -21,4 +25,6 @@ Then, run the following in the Erlang shell:
 
 1> application:start(json_parser).
 ok
-2> 
+2> json_parser:parse_document(<<"[null,true,{\"int\":42,\"float\":3.14}]">>).
+{ok,{undefined,true,[{<<"int">>,42},{<<"float">>,3.14}]}}
+3> 
