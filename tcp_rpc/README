@@ -1,0 +1,9 @@
+There are two ways to build this code.  The first is to cd into each of the application directories in the lib directory and run the following command:
+
+erlc -o ./ebin -I ./include ./src/*.erl
+
+The second way to build this code is to install the Sinan build system. To install it go to Erlware.org and download the Faxien package management system.  Once installed run 
+
+<erlware-install-dir>/bin/faxien install-release sinan
+
+When that is finished just type sinan. This will build all the applications correctly and place them at _build/development/apps/<appname>-<appvsn>. More on Sinan and Faxien can be found in appendix C of this book.

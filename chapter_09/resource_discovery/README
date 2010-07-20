@@ -1,0 +1,12 @@
+To build this code, run the following command:
+
+erlc -o ./ebin ./src/*.erl
+
+To run the program, first start Erlang like this:
+
+erl -pa ./ebin
+
+Then, run the following in the Erlang shell:
+
+1> application:start(resource_discovery).
+ok

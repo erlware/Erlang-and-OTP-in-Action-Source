@@ -1,0 +1,59 @@
+To build this code, run the following commands (or run compile.sh):
+
+erlc -o ./tcp_interface/ebin ./tcp_interface/src/*.erl
+erlc -o ./gen_web_server/ebin ./gen_web_server/src/*.erl
+erlc -pa ./gen_web_server/ebin -o ./http_interface/ebin ./http_interface/src/*.erl
+erlc -o ./simple_cache/ebin ./simple_cache/src/*.erl
+erlc -o ./resource_discovery/ebin ./resource_discovery/src/*.erl
+
+Start the simple_cache system as in chapter 10 (including a contact node),
+but also including the paths to the ebin directories of tcp_interface,
+gen_web_server, and http_interface:
+
+erl -sname contact1 -detached
+erl -sname mynode -pa ./tcp_interface/ebin -pa ./gen_web_server/ebin -pa ./http_interface/ebin -pa ./simple_cache/ebin -pa ./resource_discovery/ebin/ -boot ./simple_cache -config sys
+
+(The node discovery waits a few seconds at startup.)
+
+Then, from the Erlang shell, run:
+
+application:start(tcp_interface).
+application:start(http_interface).
+
+You can now e.g. run appmon:start() to inspect the system and check that
+tcp_interface is running alongside the other applications.
+
+After that, open another terminal window and use telnet
+to connect to the TCP interface, like this:
+
+$ telnet localhost 1155
+Trying 127.0.0.1...
+Connected to localhost.localdomain.
+Escape character is '^]'.
+lookup[foo]
+OK:{error,not_found}.
+insert[foo,bar]
+OK:ok.
+lookup[foo]
+OK:{ok,bar}.
+delete[foo]
+OK:ok.
+lookup[foo]
+OK:{error,not_found}.
+
+Or, use a command-line HTTP client like 'curl' to connect
+to the HTTP interface:
+
+$ curl -T put.txt http://localhost:1156/xyzzy
+$ curl http://localhost:1156/xyzzy
+Erlang
+
+(if the file put.txt contains the text "Erlang"). You can
+also use a normal web browser and enter a URL such as
+http://localhost:1156/xyzzy in the address field. Note that
+the HTTP interface stores text as binaries in the cache,
+so for example, to look up the key xyzzy from the TCP
+interface, you have to enter the query like this:
+
+lookup[<<"xyzzy">>]
+OK:{ok,<<"Erlang\n">>}.

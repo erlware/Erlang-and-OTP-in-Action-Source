@@ -1,0 +1,15 @@
+#!/bin/sh
+
+PROG=$0
+PROG_DIR=$(cd `dirname $0`; pwd)
+test -h $0 && PROG=$(readlink $0)
+export ROOTDIR=$(dirname $PROG_DIR)
+
+#### Fill in values for these variables ####
+REL_NAME=hello_erlware
+REL_VSN=0.1.0.0
+ERTS_VSN=5.7.4
+INVOCATION_SUFFIX="$@"
+###########################################
+
+$ROOTDIR/bin/erlware_release_start_helper $REL_NAME $REL_VSN $ERTS_VSN sys.config $INVOCATION_SUFFIX

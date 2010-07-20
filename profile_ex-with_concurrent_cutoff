@@ -1,0 +1,161 @@
+%% Analysis results:
+{  analysis_options,
+ [{callers, true},
+  {sort, acc},
+  {totals, false},
+  {details, true}]}.
+
+%                                               CNT       ACC       OWN        
+[{ totals,                                     4689,   78.590,   78.552}].  %%%
+
+
+%                                               CNT       ACC       OWN        
+[{ "<0.47.0>",                                 2666,undefined,   44.376},    %%
+ { spawned_by, "<0.38.0>"},
+ { spawned_as, {erlang,apply,["#Fun<profile_ex.1.118133018>",[]]}},
+ { initial_calls, [{erlang,apply,2},{profile_ex,'-run/0-fun-1-',0}]}].
+
+{[{undefined,                                     1,   78.448,    0.009}],     
+ { {erlang,apply,2},                              1,   78.448,    0.009},     %
+ [{{profile_ex,'-run/0-fun-1-',0},                  1,   44.404,    0.001},      
+  {suspend,                                       1,   34.035,    0.000}]}.    
+
+{[{{erlang,apply,2},                              1,   44.404,    0.001}],     
+ { {profile_ex,'-run/0-fun-1-',0},                  1,   44.404,    0.001},     %
+ [{{profile_ex,funner,1},                           1,   44.403,    0.002}]}.    
+
+{[{{profile_ex,'-run/0-fun-1-',0},                  1,   44.403,    0.002}],     
+ { {profile_ex,funner,1},                           1,   44.403,    0.002},     %
+ [{{profile_ex,funner,2},                           1,   44.401,    0.013}]}.    
+
+{[{{profile_ex,funner,1},                           1,   44.401,    0.013},      
+  {{profile_ex,funner,2},                         884,    0.000,   17.443}],     
+ { {profile_ex,funner,2},                         885,   44.401,   17.456},     %
+ [{{profile_ex,'-funner/1-fun-0-',1},             885,   26.908,   18.194},      
+  {suspend,                                       1,    0.037,    0.000},      
+  {{profile_ex,funner,2},                         884,    0.000,   17.443}]}.    
+
+{[{{erlang,apply,2},                              1,   34.035,    0.000},      
+  {{profile_ex,funner,2},                           1,    0.037,    0.000}],     
+ { suspend,                                       2,   34.072,    0.000},     %
+ [ ]}.
+
+{[{{profile_ex,funner,2},                         885,   26.908,   18.194}],     
+ { {profile_ex,'-funner/1-fun-0-',1},             885,   26.908,   18.194},     %
+ [{{erlang,integer_to_list,1},                  885,    8.500,    8.500},      
+  {garbage_collect,                               6,    0.214,    0.214}]}.    
+
+{[{{profile_ex,'-funner/1-fun-0-',1},             885,    8.500,    8.500}],     
+ { {erlang,integer_to_list,1},                  885,    8.500,    8.500},     %
+ [ ]}.
+
+{[{{profile_ex,'-funner/1-fun-0-',1},               6,    0.214,    0.214}],     
+ { garbage_collect,                               6,    0.214,    0.214},     %
+ [ ]}.
+
+{[ ],
+ { undefined,                                     0,    0.000,    0.000},     %
+ [{{erlang,apply,2},                              1,   78.448,    0.009}]}.    
+
+
+%                                               CNT       ACC       OWN        
+[{ "<0.46.0>",                                 2011,undefined,   33.924},    %%
+ { spawned_by, "<0.38.0>"},
+ { spawned_as, {erlang,apply,["#Fun<profile_ex.0.9423607>",[]]}},
+ { initial_calls, [{erlang,apply,2},{profile_ex,'-run/0-fun-0-',0}]}].
+
+{[{undefined,                                     1,   68.811,    0.037}],     
+ { {erlang,apply,2},                              1,   68.811,    0.037},     %
+ [{{profile_ex,'-run/0-fun-0-',0},                  1,   68.586,    0.030},      
+  {suspend,                                       1,    0.188,    0.000}]}.    
+
+{[{{erlang,apply,2},                              1,   68.586,    0.030}],     
+ { {profile_ex,'-run/0-fun-0-',0},                  1,   68.586,    0.030},     %
+ [{{profile_ex,looper,1},                           1,   68.556,    0.032}]}.    
+
+{[{{profile_ex,'-run/0-fun-0-',0},                  1,   68.556,    0.032},      
+  {{profile_ex,looper,1},                        1000,    0.000,   23.058}],     
+ { {profile_ex,looper,1},                        1001,   68.556,   23.090},     %
+ [{suspend,                                       1,   34.699,    0.000},      
+  {{erlang,integer_to_list,1},                 1000,   10.593,   10.593},      
+  {garbage_collect,                               6,    0.174,    0.174},      
+  {{profile_ex,looper,1},                        1000,    0.000,   23.058}]}.    
+
+{[{{profile_ex,looper,1},                           1,   34.699,    0.000},      
+  {{erlang,apply,2},                              1,    0.188,    0.000}],     
+ { suspend,                                       2,   34.887,    0.000},     %
+ [ ]}.
+
+{[{{profile_ex,looper,1},                        1000,   10.593,   10.593}],     
+ { {erlang,integer_to_list,1},                 1000,   10.593,   10.593},     %
+ [ ]}.
+
+{[{{profile_ex,looper,1},                           6,    0.174,    0.174}],     
+ { garbage_collect,                               6,    0.174,    0.174},     %
+ [ ]}.
+
+{[ ],
+ { undefined,                                     0,    0.000,    0.000},     %
+ [{{erlang,apply,2},                              1,   68.811,    0.037}]}.    
+
+
+%                                               CNT       ACC       OWN        
+[{ "<0.38.0>",                                   12,undefined,    0.252}].   %%
+
+{[{undefined,                                     0,   78.554,    0.031}],     
+ { {profile_ex,run_with_fprof,0},                      0,   78.554,    0.031},     %
+ [{{fprof,trace,1},                               1,   78.382,    0.003},      
+  {{fprof,just_call,2},                           0,    0.141,    0.020}]}.    
+
+{[{{fprof,call,1},                                1,   78.362,    0.021},      
+  {{profile_ex,run_with_fprof,0},                      0,    0.141,    0.020},      
+  {undefined,                                     0,    0.036,    0.021}],     
+ { {fprof,just_call,2},                           1,   78.539,    0.062},     %
+ [{suspend,                                       1,   78.338,    0.000},      
+  {{profile_ex,run,0},                              1,    0.121,    0.029},      
+  {{erlang,demonitor,1},                          1,    0.015,    0.015},      
+  {{erlang,monitor,2},                            1,    0.003,    0.003}]}.    
+
+{[{{profile_ex,run_with_fprof,0},                      1,   78.382,    0.003}],     
+ { {fprof,trace,1},                               1,   78.382,    0.003},     %
+ [{{fprof,call,1},                                1,   78.379,    0.014}]}.    
+
+{[{{fprof,trace,1},                               1,   78.379,    0.014}],     
+ { {fprof,call,1},                                1,   78.379,    0.014},     %
+ [{{fprof,just_call,2},                           1,   78.362,    0.021},      
+  {{erlang,whereis,1},                            1,    0.003,    0.003}]}.    
+
+{[{{fprof,just_call,2},                           1,   78.338,    0.000}],     
+ { suspend,                                       1,   78.338,    0.000},     %
+ [ ]}.
+
+{[{{fprof,just_call,2},                           1,    0.121,    0.029}],     
+ { {profile_ex,run,0},                              1,    0.121,    0.029},     %
+ [{{erlang,spawn,1},                              2,    0.092,    0.031}]}.    
+
+{[{{profile_ex,run,0},                              2,    0.092,    0.031}],     
+ { {erlang,spawn,1},                              2,    0.092,    0.031},     %
+ [{{erlang,spawn,3},                              2,    0.061,    0.061}]}.    
+
+{[{{erlang,spawn,1},                              2,    0.061,    0.061}],     
+ { {erlang,spawn,3},                              2,    0.061,    0.061},     %
+ [ ]}.
+
+{[{{fprof,just_call,2},                           1,    0.015,    0.015}],     
+ { {erlang,demonitor,1},                          1,    0.015,    0.015},     %
+ [ ]}.
+
+{[{{fprof,call,1},                                1,    0.003,    0.003}],     
+ { {erlang,whereis,1},                            1,    0.003,    0.003},     %
+ [ ]}.
+
+{[{{fprof,just_call,2},                           1,    0.003,    0.003}],     
+ { {erlang,monitor,2},                            1,    0.003,    0.003},     %
+ [ ]}.
+
+{[ ],
+ { undefined,                                     0,    0.000,    0.000},     %
+ [{{profile_ex,run_with_fprof,0},                      0,   78.554,    0.031},      
+  {{fprof,just_call,2},                           0,    0.036,    0.021}]}.    
+
+

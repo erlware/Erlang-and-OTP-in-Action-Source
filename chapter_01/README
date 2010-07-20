@@ -1,0 +1,8 @@
+To run the program, start Erlang (in the same directory),
+then run the following in the Erlang shell:
+
+1> c(pingpong).
+{ok,pingpong}
+2> pingpong:run().
+ok
+3> 

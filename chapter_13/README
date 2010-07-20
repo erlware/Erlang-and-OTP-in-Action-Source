@@ -1,0 +1,104 @@
+To build the Erlang code, run the following commands:
+
+erlc -o ./simple_cache/ebin ./simple_cache/src/*.erl
+erlc -o ./resource_discovery/ebin ./resource_discovery/src/*.erl
+
+
+To build the JInterfaceExample.java file:
+
+javac -cp /usr/local/lib/erlang/lib/jinterface-1.5.1/priv/OtpErlang.jar JInterfaceExample.java
+
+(modify the path to the OtpErlang.jar file to match your installation).
+
+
+To build the Java files for the HBase bridge:
+
+javac -cp hadoop-0.20.2/hadoop-0.20.2-core.jar:hbase-0.20.3/hbase-0.20.3.jar:/usr/local/lib/erlang/lib/jinterface-1.5.1/priv/OtpErlang.jar:./simple_cache/priv/java -d ./simple_cache/priv/java ./simple_cache/java_src/*.java
+
+(note that .class files are placed in ./simple_cache/priv/java).
+
+
+Start HBase:
+
+./hbase-0.20.3/bin/start-hbase.sh
+
+
+Create the HBase table:
+
+./hbase-0.20.3/bin/hbase shell
+HBase Shell; enter 'help<RETURN>' for list of supported commands.
+Version: 0.20.3, r902334, Mon Jan 25 13:13:28 PST 2010
+hbase(main):001:0> create 'cache', {NAME => 'value'}
+0 row(s) in 2.1900 seconds
+hbase(main):002:0> exit
+
+
+Start one or two contact nodes. Ensure that the node names
+in the sys.config files match your host name, or use -sname instead
+of -name in order to use 'localhost'. For example, do:
+
+erl -sname contact1 -detached -setcookie secret
+
+
+Start the HBaseNode (passing a node name and a cookie string):
+
+java -cp apache-log4j-1.2.16/log4j-1.2.16.jar:zookeeper-3.2.2/zookeeper-3.2.2.jar:commons-logging-1.1.1/commons-logging-1.1.1.jar:hadoop-0.20.2/hadoop-0.20.2-core.jar:hbase-0.20.3/hbase-0.20.3.jar:/usr/local/lib/erlang/lib/jinterface-1.5.1/priv/OtpErlang.jar:./simple_cache/priv/java HBaseNode hbase secret
+
+
+Then, start the system like this (all on a single line):
+
+erl -sname mynode -pa ./simple_cache/ebin -pa ./resource_discovery/ebin/ -boot ./simple_cache -config sys -setcookie secret
+
+(Recall that the initial node discovery waits a few seconds at startup.)
+
+
+You should now be able to insert/lookup/delete entries via the simple_cache
+module, as well as inspect or modify the HBase database directly via the
+sc_hbase module. For example:
+
+Eshell V5.7.3  (abort with ^G)
+(mynode@localhost)1> sc_hbase:get(hbase@localhost, foo).
+{error,not_found}
+(mynode@localhost)2> simple_cache:insert(foo, bar).
+=INFO REPORT==== 24-Apr-2010::21:25:27 ===
+create(foo, bar)
+ok
+(mynode@localhost)3> simple_cache:lookup(foo).     
+=INFO REPORT==== 24-Apr-2010::21:25:50 ===
+lookup(foo)
+{ok,bar}
+(mynode@localhost)4> sc_hbase:get(hbase@localhost, foo).
+{ok,bar}
+(mynode@localhost)5> simple_cache:lookup(17).         
+=INFO REPORT==== 24-Apr-2010::21:27:17 ===
+lookup(17)
+{error,not_found}
+(mynode@localhost)6> sc_hbase:put(hbase@localhost, 17, 42).
+ok
+(mynode@localhost)7> sc_hbase:get(hbase@localhost, 17).    
+{ok,42}
+(mynode@localhost)8> simple_cache:lookup(17).            
+=INFO REPORT==== 24-Apr-2010::21:29:09 ===
+lookup(17)
+=INFO REPORT==== 24-Apr-2010::21:29:09 ===
+create(17, 42)
+{ok,42}
+(mynode@localhost)9> simple_cache:lookup(17).         
+=INFO REPORT==== 24-Apr-2010::21:34:49 ===
+lookup(17)
+{ok,42}
+(mynode@localhost)10> simple_cache:delete(foo).
+=INFO REPORT==== 24-Apr-2010::21:29:41 ===
+delete(foo)
+ok
+(mynode@localhost)11> simple_cache:lookup(foo).
+=INFO REPORT==== 24-Apr-2010::21:29:44 ===
+lookup(foo)
+{error,not_found}
+(mynode@localhost)12> sc_hbase:get(hbase@localhost, foo).
+{error,not_found}
+
+Note in particular the log message "create(17,42)" that shows that when the
+key 17 was not found in the cache, it was looked up in HBase and then
+automatically inserted into the cache for future lookups. The following
+lookup operation can be seen to succeed immediately.

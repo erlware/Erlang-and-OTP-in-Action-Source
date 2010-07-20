@@ -1,0 +1,9 @@
+*.boot
+*.script
+*.tar.gz
+*.class
+apache-*
+commons-logging-*
+hadoop-*
+hbase-*
+zookeeper-*

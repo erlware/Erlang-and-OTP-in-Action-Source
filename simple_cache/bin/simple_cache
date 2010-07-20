@@ -1,0 +1,25 @@
+#!/bin/sh
+
+PROG=$0
+PROG_DIR=$(cd `dirname $0`; pwd)
+test -h $0 && PROG=$(readlink $0)
+PREFIX=$(dirname $PROG_DIR)
+
+#### Fill in values for these variables ####
+REL_NAME=simple_cache
+REL_VSN=0.1.0.4
+ERTS_VSN=5.7.4
+INVOCATION_SUFFIX="-sname $@"
+###########################################
+
+
+export ROOTDIR=$PREFIX
+ERTS_DIR=$ROOTDIR/erts-$ERTS_VSN
+export BINDIR=$ERTS_DIR/bin
+export EMU=beam
+export PROGNAME=erl
+export LD_LIBRARY_PATH=$ERTS_DIR/lib
+
+REL_DIR=$PREFIX/releases/$REL_NAME-$REL_VSN
+
+$BINDIR/erlexec -config $REL_DIR/sys.config -boot $REL_DIR/$REL_NAME $INVOCATION_SUFFIX
