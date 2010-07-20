@@ -9,6 +9,7 @@
 
 #include <yajl/yajl_parse.h>
 
+
 /* yajl callback prototypes */
 static int handle_null(void * ctx);
 static int handle_boolean(void * ctx, int boolean);
@@ -37,48 +38,37 @@ static yajl_callbacks callbacks = {
   handle_end_array
 };
 
-/*
-void *alloc_func(void *ctx, unsigned int sz)
-{
-  return malloc(sz);
-}
 
-void *realloc_func(void *ctx, void *ptr, unsigned int sz)
-{
-  return realloc(ptr, sz);
-}
-
-void free_func(void *ctx, void *ptr)
-{
-  free(ptr);
-}
-
-static yajl_alloc_funcs alloc_funcs = {
-  alloc_func,
-  realloc_func,
-  free_func,
-  NULL
-};
-*/
-
-
-struct container {
+typedef struct container_t {
   int index;    /* offset of container header */
   int count;    /* number of elements */
-  struct container *next;
-};
+  struct container_t *next;
+} container_t;
 
-struct state {
-  ei_x_buff x;         /* the dynamic buffer */
-  struct container *c; /* innermost container */
-};
+typedef struct {
+  ei_x_buff x;     /* Erl Interface dynamic buffer */
+  container_t *c;  /* innermost container */
+} state_t;
 
 
 #define ERR_READ         10
 #define ERR_READ_HEADER  11
 #define ERR_PACKET_SIZE  12
-#define ERR_DECODE       13
-#define ERR_BADARG       14
+
+static void write_packet(char *buf, int sz, FILE *fd)
+{
+  uint8_t hd[4];
+  
+  /* the packet header must be in Network Byte Order */
+  hd[0] = (sz >> 24) & 0xff;
+  hd[1] = (sz >> 16) & 0xff;
+  hd[2] = (sz >> 8) & 0xff;
+  hd[3] = sz & 0xff;
+  fwrite(hd, 1, 4, fd);
+
+  fwrite(buf, 1, sz, fd);
+  fflush(fd);
+}
 
 size_t read_bytes(unsigned char *buf, size_t max, FILE *fd)
 {
@@ -91,34 +81,14 @@ size_t read_bytes(unsigned char *buf, size_t max, FILE *fd)
   return n;
 }
 
-static void write_packet(ei_x_buff *x, FILE *fd)
-{
-  uint8_t hd[4];
-  int sz = x->buffsz;
-  
-  /* the packet header must be in Network Byte Order */
-  hd[0] = (sz >> 24) & 0xff;
-  hd[1] = (sz >> 16) & 0xff;
-  hd[2] = (sz >> 8) & 0xff;
-  hd[3] = sz & 0xff;
-  fwrite(hd, 1, 4, fd);
-
-  fwrite(x->buff, 1, sz, fd);
-  fflush(fd);
-}
-
-/* returns an ETERM pointer to a binary term, or NULL */
-static ETERM *read_document(unsigned char *buf, size_t max, FILE *fd)
+void read_document(unsigned char *buf, size_t max, FILE *fd)
 {
   size_t n, sz;
   uint8_t hd[4];
-  ETERM *t;
   
   n = read_bytes(hd, 4, fd);
-  if (n != 4) {
-    if (n == 0 && feof(fd)) return NULL;
-    exit(ERR_READ_HEADER);
-  }
+  if (n == 0 && feof(fd)) exit(EXIT_SUCCESS); /* end of input */
+  if (n != 4) exit(ERR_READ_HEADER);
   /* the packet header is always in Network Byte Order */
   sz = (hd[0] << 24) + (hd[1] << 16) + (hd[2] << 8) + hd[3];
   if (sz > max) {
@@ -128,71 +98,75 @@ static ETERM *read_document(unsigned char *buf, size_t max, FILE *fd)
   if (n != sz) {
     exit(ERR_READ);
   }
-  t = erl_decode(buf);
-  if (t == NULL) {
-    exit(ERR_DECODE);
-  }
-  if (!ERL_IS_BINARY(t)) {
-    exit(ERR_BADARG);
-  }
-  return t;
 }
 
-void write_error(const char *text, FILE *fd)
+
+void encode_error(state_t *st, const char *text)
 {
-  ei_x_buff x;
-  ei_x_new_with_version(&x);
-  ei_x_encode_tuple_header(&x, 2);
-  ei_x_encode_atom(&x, "error");
-  ei_x_encode_string(&x, text);
-  write_packet(&x, fd);
-  ei_x_free(&x);
+  /* replace the old output buffer */
+  ei_x_free(&st->x);
+  ei_x_new_with_version(&st->x);
+  /* encode an error tuple with the text as an atom */
+  ei_x_encode_tuple_header(&st->x, 2);
+  ei_x_encode_atom(&st->x, "error");
+  ei_x_encode_string(&st->x, text);
+}
+
+int parse_json(state_t *st, unsigned char *buf, size_t len)
+{
+  yajl_parser_config cfg = {
+    1, /* allow comments */
+    0  /* don't check UTF-8 */
+  };
+  yajl_handle yh;
+  yajl_status ys;
+  int err = 1;
+
+  yh = yajl_alloc(&callbacks, &cfg, NULL, st);
+  ys = yajl_parse(yh, buf, len);
+  if (ys == yajl_status_insufficient_data) {
+    ys = yajl_parse_complete(yh);
+  }
+  if (ys == yajl_status_insufficient_data) {
+    encode_error(st, "unexpected end of document");
+  } else if (ys != yajl_status_ok) {
+    unsigned char *msg = yajl_get_error(yh, 0, NULL, 0);
+    encode_error(st, (const char *)msg);
+    yajl_free_error(yh, msg);
+  } else {
+    err = 0;
+  }
+  yajl_free(yh);
+  return err;
 }
 
 
 int main(int argc, char **argv)
 {
-  erl_init(NULL, 0); /* initialize erl_interface */
-
-  yajl_parser_config cfg = {
-    1, /* allow comments */
-    0  /* don't check UTF-8 */
-  };
-  yajl_handle hand;
-  yajl_status stat;
-
   static unsigned char buf[65536];
-  struct state st;
   ETERM *t;
-
-  while ((t = read_document(buf, sizeof(buf) - 1, stdin)) != NULL) {
+  erl_init(NULL, 0); /* initialize erl_interface */
+  for (;;) {
     /* initialize the state and the output buffer */
+    state_t st;
     st.c = NULL;
     ei_x_new_with_version(&st.x);
 
-    ei_x_encode_tuple_header(&st.x, 2); /* begin ok-result tuple */
-    ei_x_encode_atom(&st.x, "ok");
-
-    hand = yajl_alloc(&callbacks, &cfg, NULL, &st);
-    stat = yajl_parse(hand, ERL_BIN_PTR(t), ERL_BIN_SIZE(t));
-    if (stat == yajl_status_insufficient_data) {
-      stat = yajl_parse_complete(hand);
-    }
-    if (stat == yajl_status_insufficient_data) {
-      write_error("unexpected end of document", stdout);
-    } else if (stat != yajl_status_ok) {
-      unsigned char *msg = yajl_get_error(hand, 0, NULL, 0);
-      write_error(msg, stdout);
-      yajl_free_error(hand, msg);
+    read_document(buf, sizeof(buf) - 1, stdin);
+    t = erl_decode(buf);
+    if (t == NULL) {
+      encode_error(&st, "error decoding packet");
+    } else if (!ERL_IS_BINARY(t)) {
+      encode_error(&st, "data must be a binary");
     } else {
-      write_packet(&st.x, stdout);
+      ei_x_encode_tuple_header(&st.x, 2); /* begin ok-result tuple */
+      ei_x_encode_atom(&st.x, "ok");
+      parse_json(&st, ERL_BIN_PTR(t), ERL_BIN_SIZE(t));
     }
-
-    yajl_free(hand);
+    write_packet(st.x.buff, st.x.buffsz, stdout); /* output result */
     ei_x_free(&st.x);
     erl_free(t);
   }
-  return 0;
 }
 
 
@@ -208,15 +182,15 @@ int main(int argc, char **argv)
  * map: { label: value, ... }      [{binary(), json()}]
  */
 
-static void count_element(struct state *st)
+static void count_element(state_t *st)
 {
-  struct container *c = st->c;
+  container_t *c = st->c;
   if (c != NULL) ++(c->count);
 }
 
 static int handle_null(void * ctx)
 {
-  struct state *st = (struct state *)ctx;
+  state_t *st = (state_t *)ctx;
   count_element(st);
   ei_x_encode_atom(&st->x, "undefined");
   return 1;
@@ -224,7 +198,7 @@ static int handle_null(void * ctx)
 
 static int handle_boolean(void * ctx, int boolean)
 {
-  struct state *st = (struct state *)ctx;
+  state_t *st = (state_t *)ctx;
   count_element(st);
   ei_x_encode_boolean(&st->x, boolean);
   return 1;
@@ -232,7 +206,7 @@ static int handle_boolean(void * ctx, int boolean)
 
 static int handle_integer(void * ctx, long integerVal)
 {
-  struct state *st = (struct state *)ctx;
+  state_t *st = (state_t *)ctx;
   count_element(st);
   ei_x_encode_long(&st->x, integerVal);
   return 1;
@@ -240,7 +214,7 @@ static int handle_integer(void * ctx, long integerVal)
 
 static int handle_double(void * ctx, double doubleVal)
 {
-  struct state *st = (struct state *)ctx;
+  state_t *st = (state_t *)ctx;
   count_element(st);
   ei_x_encode_double(&st->x, doubleVal);
   return 1;
@@ -249,7 +223,7 @@ static int handle_double(void * ctx, double doubleVal)
 static int handle_string(void * ctx, const unsigned char * stringVal,
                          unsigned int stringLen)
 {
-  struct state *st = (struct state *)ctx;
+  state_t *st = (state_t *)ctx;
   count_element(st);
   ei_x_encode_binary(&st->x, stringVal, stringLen);
   return 1;
@@ -258,7 +232,7 @@ static int handle_string(void * ctx, const unsigned char * stringVal,
 static int handle_map_key(void * ctx, const unsigned char * stringVal,
                           unsigned int stringLen)
 {
-  struct state *st = (struct state *)ctx;
+  state_t *st = (state_t *)ctx;
   /* Begin a 2-tuple with the key string as first element.
      The next called callback function will encode the value.
      Don't count the keys, only the values. */
@@ -269,8 +243,8 @@ static int handle_map_key(void * ctx, const unsigned char * stringVal,
 
 static int handle_start(void * ctx, int array)
 {
-  struct state *st = (struct state *)ctx;
-  struct container *c = malloc(sizeof(struct container));
+  state_t *st = (state_t *)ctx;
+  container_t *c = malloc(sizeof(container_t));
   count_element(st);
   /* link and initialize container struct */
   c->next = st->c;
@@ -288,18 +262,18 @@ static int handle_start(void * ctx, int array)
 
 static int handle_start_map(void * ctx)
 {
-  handle_start(ctx, 0);
+  return handle_start(ctx, 0);
 }
 
 static int handle_start_array(void * ctx)
 {
-  handle_start(ctx, 1);
+  return handle_start(ctx, 1);
 }
 
 static int handle_end(void * ctx, int array)
 {
-  struct state *st = (struct state *)ctx;
-  struct container *c = st->c;
+  state_t *st = (state_t *)ctx;
+  container_t *c = st->c;
   int index = st->c->index; /* temporary variable needed */
   /* back-patch the header */
   if (array) {
@@ -316,10 +290,10 @@ static int handle_end(void * ctx, int array)
 
 static int handle_end_map(void * ctx)
 {
-  handle_end(ctx, 0);
+  return handle_end(ctx, 0);
 }
 
 static int handle_end_array(void * ctx)
 {
-  handle_end(ctx, 1);
+  return handle_end(ctx, 1);
 }
