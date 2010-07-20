@@ -9,6 +9,7 @@
 
 #include <yajl/yajl_parse.h>
 
+#define BUFSIZE 65536
 
 /* yajl callback prototypes */
 static int handle_null(void * ctx);
@@ -70,7 +71,7 @@ static void write_packet(char *buf, int sz, FILE *fd)
   fflush(fd);
 }
 
-size_t read_bytes(unsigned char *buf, size_t max, FILE *fd)
+static size_t read_bytes(unsigned char *buf, size_t max, FILE *fd)
 {
   size_t n;
   n = fread(buf, 1, max, fd);
@@ -81,7 +82,7 @@ size_t read_bytes(unsigned char *buf, size_t max, FILE *fd)
   return n;
 }
 
-void read_document(unsigned char *buf, size_t max, FILE *fd)
+static void read_document(unsigned char *buf, size_t max, FILE *fd)
 {
   size_t n, sz;
   uint8_t hd[4];
@@ -101,7 +102,7 @@ void read_document(unsigned char *buf, size_t max, FILE *fd)
 }
 
 
-void encode_error(state_t *st, const char *text)
+static void encode_error(state_t *st, const char *text)
 {
   /* replace the old output buffer */
   ei_x_free(&st->x);
@@ -112,7 +113,7 @@ void encode_error(state_t *st, const char *text)
   ei_x_encode_string(&st->x, text);
 }
 
-int parse_json(state_t *st, unsigned char *buf, size_t len)
+static int parse_json(state_t *st, unsigned char *buf, size_t len)
 {
   yajl_parser_config cfg = {
     1, /* allow comments */
@@ -141,31 +142,36 @@ int parse_json(state_t *st, unsigned char *buf, size_t len)
 }
 
 
+static void process_data(unsigned char *buf)
+{
+  /* initialize the state and the output buffer */
+  state_t st;
+  st.c = NULL;
+  ei_x_new_with_version(&st.x);
+  
+  ETERM *t = erl_decode(buf);
+  if (t == NULL) {
+    encode_error(&st, "error decoding packet");
+  } else if (!ERL_IS_BINARY(t)) {
+    encode_error(&st, "data must be a binary");
+  } else {
+    ei_x_encode_tuple_header(&st.x, 2); /* begin ok-result tuple */
+    ei_x_encode_atom(&st.x, "ok");
+    parse_json(&st, ERL_BIN_PTR(t), ERL_BIN_SIZE(t));
+  }
+  write_packet(st.x.buff, st.x.buffsz, stdout); /* output result */
+  ei_x_free(&st.x);
+  erl_free(t);
+}
+
+
 int main(int argc, char **argv)
 {
-  static unsigned char buf[65536];
-  ETERM *t;
+  static unsigned char buf[BUFSIZE];
   erl_init(NULL, 0); /* initialize erl_interface */
   for (;;) {
-    /* initialize the state and the output buffer */
-    state_t st;
-    st.c = NULL;
-    ei_x_new_with_version(&st.x);
-
     read_document(buf, sizeof(buf) - 1, stdin);
-    t = erl_decode(buf);
-    if (t == NULL) {
-      encode_error(&st, "error decoding packet");
-    } else if (!ERL_IS_BINARY(t)) {
-      encode_error(&st, "data must be a binary");
-    } else {
-      ei_x_encode_tuple_header(&st.x, 2); /* begin ok-result tuple */
-      ei_x_encode_atom(&st.x, "ok");
-      parse_json(&st, ERL_BIN_PTR(t), ERL_BIN_SIZE(t));
-    }
-    write_packet(st.x.buff, st.x.buffsz, stdout); /* output result */
-    ei_x_free(&st.x);
-    erl_free(t);
+    process_data(buf);
   }
 }
 
