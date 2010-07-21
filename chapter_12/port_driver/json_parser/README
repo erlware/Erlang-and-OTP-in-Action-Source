@@ -19,7 +19,7 @@ install YAJL it in a standard location.
 
 To run the program, first start Erlang like this:
 
-erl -pa ./ebin
+erl -pa ../json_parser/ebin
 
 Then, run the following in the Erlang shell:
 

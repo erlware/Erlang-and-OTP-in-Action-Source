@@ -100,6 +100,6 @@ create_port() ->
             error_logger:format("~w priv dir not found~n", [?APPNAME]),
             exit(error);
         PrivDir ->
-            open_port({spawn, filename:join([PrivDir, "parser"])},
+            open_port({spawn, filename:join([PrivDir, "jp_prog"])},
                       [binary, {packet, 4}, exit_status])
     end.
