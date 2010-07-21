@@ -5,7 +5,8 @@
   {vsn, "0.1.0"},
   {modules, [jp_app,
              jp_sup,
-             jp_server]},
+             jp_server,
+             json_parser]},
   {registered, [jp_sup]},
   {applications, [kernel, stdlib]},
   {mod, {jp_app, []}}
