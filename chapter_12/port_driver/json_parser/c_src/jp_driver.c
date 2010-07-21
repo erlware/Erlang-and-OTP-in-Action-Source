@@ -9,8 +9,6 @@
 
 #include <yajl/yajl_parse.h>
 
-#define BUFSIZE 65536
-
 /* yajl callback prototypes */
 static int handle_null(void * ctx);
 static int handle_boolean(void * ctx, int boolean);
