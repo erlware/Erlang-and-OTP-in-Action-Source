@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <erl_interface.h>
 #include <ei.h>
 
 #include <yajl/yajl_parse.h>
@@ -149,26 +148,27 @@ static void process_data(unsigned char *buf)
   st.c = NULL;
   ei_x_new_with_version(&st.x);
   
-  ETERM *t = erl_decode(buf);
-  if (t == NULL) {
-    encode_error(&st, "error decoding packet");
-  } else if (!ERL_IS_BINARY(t)) {
+  int index = 0;
+  int ver = 0, type = 0, size = 0;
+
+  if (ei_decode_version((char *)buf, &index, &ver)) {
+    encode_error(&st, "data encoding version mismatch");
+  } else if (ei_get_type((char *)buf, &index, &type, &size)
+             || type != ERL_BINARY_EXT) {
     encode_error(&st, "data must be a binary");
   } else {
     ei_x_encode_tuple_header(&st.x, 2); /* begin ok-result tuple */
     ei_x_encode_atom(&st.x, "ok");
-    parse_json(&st, ERL_BIN_PTR(t), ERL_BIN_SIZE(t));
+    parse_json(&st, &buf[index+5], size);
   }
   write_packet(st.x.buff, st.x.buffsz, stdout); /* output result */
   ei_x_free(&st.x);
-  erl_free(t);
 }
 
 
 int main(int argc, char **argv)
 {
   static unsigned char buf[BUFSIZE];
-  erl_init(NULL, 0); /* initialize erl_interface */
   for (;;) {
     read_document(buf, sizeof(buf) - 1, stdin);
     process_data(buf);
