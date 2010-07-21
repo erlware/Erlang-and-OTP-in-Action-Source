@@ -102,9 +102,7 @@ create_port() ->
         PrivDir ->
             case erl_ddll:load(PrivDir, "jp_driver") of
                 ok -> ok;
-                {error, already_loaded} -> ok;
                 Other -> exit(Other)
             end,
-            open_port({spawn, filename:join([PrivDir, "parser"])},
-                      [binary])
+            open_port({spawn, "jp_driver"}, [binary])
     end.
