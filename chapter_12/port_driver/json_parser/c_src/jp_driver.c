@@ -11,18 +11,18 @@
 #include <yajl/yajl_parse.h>
 
 /* yajl callback prototypes */
-static int handle_null(void * ctx);
-static int handle_boolean(void * ctx, int boolean);
-static int handle_integer(void * ctx, long integerVal);
-static int handle_double(void * ctx, double doubleVal);
-static int handle_string(void * ctx, const unsigned char * stringVal,
+static int handle_null(void *ctx);
+static int handle_boolean(void *ctx, int boolVal);
+static int handle_integer(void *ctx, long integerVal);
+static int handle_double(void *ctx, double doubleVal);
+static int handle_string(void *ctx, const unsigned char *stringVal,
                          unsigned int stringLen);
-static int handle_map_key(void * ctx, const unsigned char * stringVal,
+static int handle_map_key(void *ctx, const unsigned char *stringVal,
                           unsigned int stringLen);
-static int handle_start_map(void * ctx);
-static int handle_end_map(void * ctx);
-static int handle_start_array(void * ctx);
-static int handle_end_array(void * ctx);
+static int handle_start_map(void *ctx);
+static int handle_end_map(void *ctx);
+static int handle_start_array(void *ctx);
+static int handle_end_array(void *ctx);
 
 static yajl_callbacks callbacks = {
   handle_null,
@@ -218,7 +218,7 @@ static void count_element(state_t *st)
   if (c != NULL) ++(c->count);
 }
 
-static int handle_null(void * ctx)
+static int handle_null(void *ctx)
 {
   state_t *st = (state_t *)ctx;
   count_element(st);
@@ -226,15 +226,15 @@ static int handle_null(void * ctx)
   return 1;
 }
 
-static int handle_boolean(void * ctx, int boolean)
+static int handle_boolean(void *ctx, int boolVal)
 {
   state_t *st = (state_t *)ctx;
   count_element(st);
-  ei_x_encode_boolean(&st->x, boolean);
+  ei_x_encode_boolean(&st->x, boolVal);
   return 1;
 }
 
-static int handle_integer(void * ctx, long integerVal)
+static int handle_integer(void *ctx, long integerVal)
 {
   state_t *st = (state_t *)ctx;
   count_element(st);
@@ -242,7 +242,7 @@ static int handle_integer(void * ctx, long integerVal)
   return 1;
 }
 
-static int handle_double(void * ctx, double doubleVal)
+static int handle_double(void *ctx, double doubleVal)
 {
   state_t *st = (state_t *)ctx;
   count_element(st);
@@ -250,7 +250,7 @@ static int handle_double(void * ctx, double doubleVal)
   return 1;
 }
 
-static int handle_string(void * ctx, const unsigned char * stringVal,
+static int handle_string(void *ctx, const unsigned char *stringVal,
                          unsigned int stringLen)
 {
   state_t *st = (state_t *)ctx;
@@ -259,7 +259,7 @@ static int handle_string(void * ctx, const unsigned char * stringVal,
   return 1;
 }
 
-static int handle_map_key(void * ctx, const unsigned char * stringVal,
+static int handle_map_key(void *ctx, const unsigned char *stringVal,
                           unsigned int stringLen)
 {
   state_t *st = (state_t *)ctx;
@@ -271,7 +271,7 @@ static int handle_map_key(void * ctx, const unsigned char * stringVal,
   return 1;
 }
 
-static int handle_start(void * ctx, int array)
+static int handle_start(void *ctx, int array)
 {
   state_t *st = (state_t *)ctx;
   container_t *c = driver_alloc(sizeof(container_t));
@@ -290,17 +290,17 @@ static int handle_start(void * ctx, int array)
   return 1;
 }
 
-static int handle_start_map(void * ctx)
+static int handle_start_map(void *ctx)
 {
   return handle_start(ctx, 0);
 }
 
-static int handle_start_array(void * ctx)
+static int handle_start_array(void *ctx)
 {
   return handle_start(ctx, 1);
 }
 
-static int handle_end(void * ctx, int array)
+static int handle_end(void *ctx, int array)
 {
   state_t *st = (state_t *)ctx;
   container_t *c = st->c;
@@ -318,12 +318,12 @@ static int handle_end(void * ctx, int array)
   return 1;
 }
 
-static int handle_end_map(void * ctx)
+static int handle_end_map(void *ctx)
 {
   return handle_end(ctx, 0);
 }
 
-static int handle_end_array(void * ctx)
+static int handle_end_array(void *ctx)
 {
   return handle_end(ctx, 1);
 }
