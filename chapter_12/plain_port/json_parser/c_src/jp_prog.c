@@ -3,6 +3,7 @@
 */
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <ei.h>
 
@@ -101,7 +102,37 @@ static void read_document(unsigned char *buf, size_t max, FILE *fd)
 }
 
 
-static void encode_error(state_t *st, const char *text)
+static const char *parse_json(state_t *st, unsigned char *buf, size_t len)
+{
+  yajl_parser_config cfg = {
+    1, /* allow comments */
+    0  /* don't check UTF-8 */
+  };
+  yajl_handle yh;
+  yajl_status ys;
+  const char *err=NULL;
+  char errmsg[256];
+
+  yh = yajl_alloc(&callbacks, &cfg, NULL, st);
+  ys = yajl_parse(yh, buf, len);
+  if (ys == yajl_status_insufficient_data) {
+    ys = yajl_parse_complete(yh);
+  }
+  if (ys == yajl_status_insufficient_data) {
+    err = "unexpected end of document";
+  } else if (ys != yajl_status_ok) {
+    unsigned char *msg = yajl_get_error(yh, 0, NULL, 0);
+    strncpy(errmsg, (char *)msg, sizeof(errmsg)-1);
+    yajl_free_error(yh, msg);
+    errmsg[sizeof(errmsg)] = 0;
+    err = errmsg;
+  }
+  yajl_free(yh);
+  return err;
+}
+
+
+static void make_error(state_t *st, const char *text)
 {
   /* replace the old output buffer */
   ei_x_free(&st->x);
@@ -111,35 +142,6 @@ static void encode_error(state_t *st, const char *text)
   ei_x_encode_atom(&st->x, "error");
   ei_x_encode_string(&st->x, text);
 }
-
-static int parse_json(state_t *st, unsigned char *buf, size_t len)
-{
-  yajl_parser_config cfg = {
-    1, /* allow comments */
-    0  /* don't check UTF-8 */
-  };
-  yajl_handle yh;
-  yajl_status ys;
-  int err = 1;
-
-  yh = yajl_alloc(&callbacks, &cfg, NULL, st);
-  ys = yajl_parse(yh, buf, len);
-  if (ys == yajl_status_insufficient_data) {
-    ys = yajl_parse_complete(yh);
-  }
-  if (ys == yajl_status_insufficient_data) {
-    encode_error(st, "unexpected end of document");
-  } else if (ys != yajl_status_ok) {
-    unsigned char *msg = yajl_get_error(yh, 0, NULL, 0);
-    encode_error(st, (const char *)msg);
-    yajl_free_error(yh, msg);
-  } else {
-    err = 0;
-  }
-  yajl_free(yh);
-  return err;
-}
-
 
 static void process_data(unsigned char *buf)
 {
@@ -152,14 +154,17 @@ static void process_data(unsigned char *buf)
   int ver = 0, type = 0, size = 0;
 
   if (ei_decode_version((char *)buf, &index, &ver)) {
-    encode_error(&st, "data encoding version mismatch");
+    make_error(&st, "data encoding version mismatch");
   } else if (ei_get_type((char *)buf, &index, &type, &size)
              || type != ERL_BINARY_EXT) {
-    encode_error(&st, "data must be a binary");
+    make_error(&st, "data must be a binary");
   } else {
     ei_x_encode_tuple_header(&st.x, 2); /* begin ok-result tuple */
     ei_x_encode_atom(&st.x, "ok");
-    parse_json(&st, &buf[index+5], size);
+    const char *err;
+    if ((err = parse_json(&st, &buf[index+5], size)) != NULL) {
+      make_error(&st, err);
+    }
   }
   write_packet(st.x.buff, st.x.buffsz, stdout); /* output result */
   ei_x_free(&st.x);
