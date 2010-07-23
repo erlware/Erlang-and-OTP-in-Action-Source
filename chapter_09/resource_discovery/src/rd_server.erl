@@ -105,10 +105,10 @@ add_resource(Type, Resource, Dict) ->
             dict:store(Type, [Resource], Dict)
     end.
 
-filter_remote_resources_by_target_types(Types, Resources) ->
+filter_remote_resources_by_target_types(Types, TypedResources) ->
     Fun =
         fun(Type, Acc) ->
-            case dict:find(Type, Resources) of
+            case dict:find(Type, TypedResources) of
                 {ok, List} ->
                     [{Type, Resource} || Resource <- List] ++ Acc;
                 error ->
