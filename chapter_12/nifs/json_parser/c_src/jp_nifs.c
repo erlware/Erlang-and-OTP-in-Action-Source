@@ -9,8 +9,6 @@
 
 #include <yajl/yajl_parse.h>
 
-#define BUFSIZE 65536
-
 /* yajl callback prototypes */
 static int handle_null(void *ctx);
 static int handle_boolean(void *ctx, int boolVal);
@@ -51,6 +49,7 @@ typedef struct {
   ErlNifEnv *env;  /* NIF environment */
   int key;         /* true if last term was a key */
   container_t *c;  /* innermost container */
+  char errmsg[256];
 } state_t;
 
 
@@ -86,7 +85,6 @@ static const char *parse_json(state_t *st, unsigned char *buf, size_t len)
   yajl_handle yh;
   yajl_status ys;
   const char *err=NULL;
-  char errmsg[256];
 
   alloc_funcs.ctx = st->env; /* will be passed to alloc funcs */
   yh = yajl_alloc(&callbacks, &cfg, &alloc_funcs, st);
@@ -98,10 +96,10 @@ static const char *parse_json(state_t *st, unsigned char *buf, size_t len)
     err = "unexpected end of document";
   } else if (ys != yajl_status_ok) {
     unsigned char *msg = yajl_get_error(yh, 0, NULL, 0);
-    strncpy(errmsg, (char *)msg, sizeof(errmsg)-1);
+    strncpy(st->errmsg, (char *)msg, sizeof(st->errmsg)-1);
     yajl_free_error(yh, msg);
-    errmsg[sizeof(errmsg)] = 0;
-    err = errmsg;
+    st->errmsg[sizeof(st->errmsg)] = 0;
+    err = st->errmsg;
   }
   yajl_free(yh);
   return err;

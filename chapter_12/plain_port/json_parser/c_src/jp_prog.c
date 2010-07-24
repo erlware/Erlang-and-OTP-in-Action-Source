@@ -49,6 +49,7 @@ typedef struct container_t {
 typedef struct {
   ei_x_buff x;     /* Erl Interface dynamic buffer */
   container_t *c;  /* innermost container */
+  char errmsg[256];
 } state_t;
 
 
@@ -78,11 +79,10 @@ static size_t read_bytes(unsigned char *buf, size_t max, FILE *fd)
   if ((n == 0) && !feof(fd)) {
     exit(ERR_READ);
   }
-  buf[n] = 0; /* zero-terminate the read data */
   return n;
 }
 
-static void read_document(unsigned char *buf, size_t max, FILE *fd)
+static void read_packet(unsigned char *buf, size_t max, FILE *fd)
 {
   size_t n, sz;
   uint8_t hd[4];
@@ -111,7 +111,6 @@ static const char *parse_json(state_t *st, unsigned char *buf, size_t len)
   yajl_handle yh;
   yajl_status ys;
   const char *err=NULL;
-  char errmsg[256];
 
   yh = yajl_alloc(&callbacks, &cfg, NULL, st);
   ys = yajl_parse(yh, buf, len);
@@ -122,10 +121,10 @@ static const char *parse_json(state_t *st, unsigned char *buf, size_t len)
     err = "unexpected end of document";
   } else if (ys != yajl_status_ok) {
     unsigned char *msg = yajl_get_error(yh, 0, NULL, 0);
-    strncpy(errmsg, (char *)msg, sizeof(errmsg)-1);
+    strncpy(st->errmsg, (char *)msg, sizeof(st->errmsg)-1);
     yajl_free_error(yh, msg);
-    errmsg[sizeof(errmsg)] = 0;
-    err = errmsg;
+    st->errmsg[sizeof(st->errmsg)] = 0;
+    err = st->errmsg;
   }
   yajl_free(yh);
   return err;
@@ -175,7 +174,8 @@ int main(int argc, char **argv)
 {
   static unsigned char buf[BUFSIZE];
   for (;;) {
-    read_document(buf, sizeof(buf) - 1, stdin);
+    read_packet(buf, sizeof(buf)-1, stdin);
+    buf[sizeof(buf)-1] = 0;  /* zero-terminate the data */
     process_data(buf);
   }
 }
