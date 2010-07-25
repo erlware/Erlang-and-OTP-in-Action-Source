@@ -306,9 +306,9 @@ static int handle_end(void *ctx, int array)
   container_t *c = st->c;
   /* back-patch the header */
   if (array) {
-    ei_encode_tuple_header(st->x.buff, &st->c->index, st->c->count);
+    ei_encode_tuple_header(st->x.buff, &c->index, c->count);
   } else {
-    ei_encode_list_header(st->x.buff, &st->c->index, st->c->count);
+    ei_encode_list_header(st->x.buff, &c->index, c->count);
     ei_x_encode_empty_list(&st->x);  /* also terminate the list */
   }
   /* unlink and decallocate container struct */
