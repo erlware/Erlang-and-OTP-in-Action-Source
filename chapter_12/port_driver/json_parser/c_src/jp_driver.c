@@ -195,7 +195,6 @@ static void drv_stop(ErlDrvData handle) {
 
 static void drv_output(ErlDrvData handle, char *buf, int sz)
 {
-  /* there should be a single binary in the ErlIOVec */
   process_data((drv_data_t *)handle, (unsigned char *)buf); 
 }
 
