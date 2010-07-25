@@ -22,4 +22,4 @@ init() ->
 
 %% @doc Parses a document given as a binary
 parse_document(Data) ->
-    erlang:error(nif_not_loaded).  % help Dialyzer and friends
+    erlang:nif_error(nif_not_loaded).  % help Dialyzer and friends
