@@ -274,8 +274,8 @@ static int handle_map_key(void *ctx, const unsigned char *stringVal,
 static int handle_start(void *ctx, int array)
 {
   state_t *st = (state_t *)ctx;
-  container_t *c = driver_alloc(sizeof(container_t));
   count_element(st);
+  container_t *c = driver_alloc(sizeof(container_t));
   /* link and initialize container struct */
   c->next = st->c;
   st->c = c;
