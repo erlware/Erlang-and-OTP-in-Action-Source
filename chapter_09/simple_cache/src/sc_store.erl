@@ -24,8 +24,16 @@ insert(Key, Pid) ->
 
 lookup(Key) ->
     case mnesia:dirty_read(key_to_pid, Key) of
-        [{key_to_pid, Key, Pid}] -> {ok, Pid};
-        []                       -> {error, not_found}
+        [{key_to_pid, Key, Pid}] ->
+	    case is_process_alive(Pid) of
+		true->
+		    {ok, Pid};
+		false ->
+		    delete(Pid),
+		    {error, not_found}
+	    end;
+        [] ->
+	    {error, not_found}
     end.
 
 delete(Pid) ->
