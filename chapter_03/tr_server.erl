@@ -130,6 +130,5 @@ args_to_terms(RawArgs) ->
 
 %% test
 
-startstop_test() ->
-    {ok, _} = tr_server:start_link(1055),
-    ok = tr_server:stop().
+start_test() ->
+    {ok, _} = tr_server:start_link(1055).
