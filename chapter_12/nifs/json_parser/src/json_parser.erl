@@ -21,5 +21,5 @@ init() ->
     end.
 
 %% @doc Parses a document given as a binary
-parse_document(Data) ->
+parse_document(_Data) ->
     erlang:nif_error(nif_not_loaded).  % help Dialyzer and friends
