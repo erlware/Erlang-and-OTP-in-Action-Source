@@ -34,8 +34,8 @@ hbase(main):002:0> exit
 
 
 Start one or two contact nodes. Ensure that the node names
-in the sys.config files match your host name, or use -sname instead
-of -name in order to use 'localhost'. For example, do:
+in the sys.config files match your host name, and/or use -sname
+instead of -name. For example, do:
 
 erl -sname contact1 -detached -setcookie secret
 

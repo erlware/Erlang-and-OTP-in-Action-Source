@@ -4,8 +4,8 @@ erlc -o ./simple_cache/ebin ./simple_cache/src/*.erl
 erlc -o ./resource_discovery/ebin ./resource_discovery/src/*.erl
 
 First start one or two contact nodes. Ensure that the node names
-in the sys.config files match your host name, or use -sname instead
-of -name in order to use 'localhost'. For example, do:
+in the sys.config files match your host name, and/or use -sname
+instead of -name. For example, do:
 
 erl -sname contact1 -detached
 

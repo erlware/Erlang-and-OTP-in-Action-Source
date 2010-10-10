@@ -4,16 +4,15 @@ erlc -o ./simple_cache/ebin ./simple_cache/src/*.erl
 erlc -o ./resource_discovery/ebin ./resource_discovery/src/*.erl
 
 First start one or two contact nodes. Ensure that the default
-node names in sc_app:ensure_contact() match your host name, or
-use -sname instead of -name in order to use 'localhost'. (Edit
-and recompile if necessary.) For example, in a separate terminal
-window, do:
+node names in sc_app:ensure_contact() match your host name, and/or
+use -sname instead of -name. (Edit and recompile if necessary.)
+For example, in a separate terminal window, do:
 
 erl -name contact1
 
 To run the program, start Erlang like this:
 
-erl -name mynode -pa ./ebin -pa ../resource_discovery/ebin/
+erl -name mynode -pa ./simple_cache/ebin -pa ./resource_discovery/ebin/
 
 Then, run the following in the Erlang shell:
 
