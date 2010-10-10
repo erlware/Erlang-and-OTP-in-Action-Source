@@ -4,7 +4,10 @@ erlc -o ./ebin ./src/*.erl
 
 To build the C code using gcc, run the following:
 
-gcc -o ./priv/jp_nifs.so -fpic -shared -I${OTPROOT}/erts-5.7.5/include -I${YAJLROOT}/include -L${YAJLROOT}/lib ./c_src/jp_nifs.c -lyajl
+gcc -o ./priv/jp_nifs.so -fpic -shared -I${OTPROOT}/erts-5.7.5/include -I${YAJLROOT}/include -L${YAJLROOT}/lib ./c_src/jp_nifs_R14.c -lyajl
+
+NOTE: Use the source file jp_nifs_R13.c instead if you're running
+Erlang/OTP version R13.
 
 OTPROOT is typically /usr/lib/erlang. Check what your versions of erts and
 erl_interface are and that the include and lib directories exist and contain
