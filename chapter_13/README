@@ -6,14 +6,14 @@ erlc -o ./resource_discovery/ebin ./resource_discovery/src/*.erl
 
 To build the JInterfaceExample.java file:
 
-javac -cp /usr/local/lib/erlang/lib/jinterface-1.5.1/priv/OtpErlang.jar JInterfaceExample.java
+javac -cp ${OTPROOT}/lib/jinterface-1.5.1/priv/OtpErlang.jar JInterfaceExample.java
 
 (modify the path to the OtpErlang.jar file to match your installation).
 
 
 To build the Java files for the HBase bridge:
 
-javac -cp hadoop-0.20.2/hadoop-0.20.2-core.jar:hbase-0.20.3/hbase-0.20.3.jar:/usr/local/lib/erlang/lib/jinterface-1.5.1/priv/OtpErlang.jar:./simple_cache/priv/java -d ./simple_cache/priv/java ./simple_cache/java_src/*.java
+javac -cp hadoop-0.20.2/hadoop-0.20.2-core.jar:hbase-0.20.3/hbase-0.20.3.jar:${OTPROOT}/lib/jinterface-1.5.1/priv/OtpErlang.jar:./simple_cache/priv/java -d ./simple_cache/priv/java ./simple_cache/java_src/*.java
 
 (note that .class files are placed in ./simple_cache/priv/java).
 
@@ -42,7 +42,7 @@ erl -sname contact1 -detached -setcookie secret
 
 Start the HBaseNode (passing a node name and a cookie string):
 
-java -cp apache-log4j-1.2.16/log4j-1.2.16.jar:zookeeper-3.2.2/zookeeper-3.2.2.jar:commons-logging-1.1.1/commons-logging-1.1.1.jar:hadoop-0.20.2/hadoop-0.20.2-core.jar:hbase-0.20.3/hbase-0.20.3.jar:/usr/local/lib/erlang/lib/jinterface-1.5.1/priv/OtpErlang.jar:./simple_cache/priv/java HBaseNode hbase secret
+java -cp apache-log4j-1.2.16/log4j-1.2.16.jar:zookeeper-3.2.2/zookeeper-3.2.2.jar:commons-logging-1.1.1/commons-logging-1.1.1.jar:hadoop-0.20.2/hadoop-0.20.2-core.jar:hbase-0.20.3/hbase-0.20.3.jar:${OTPROOT}/lib/jinterface-1.5.1/priv/OtpErlang.jar:./simple_cache/priv/java HBaseNode hbase secret
 
 
 Then, start the system like this (all on a single line):
