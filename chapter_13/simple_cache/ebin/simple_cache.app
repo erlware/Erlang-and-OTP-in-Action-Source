@@ -10,7 +10,7 @@
              sc_event,
              sc_event_logger,
 	     sc_hbase]},
-  {registered, [sc_sup]},
+  {registered, [sc_sup, sc_element_sup, sc_event]},
   {applications, [kernel, sasl, stdlib, mnesia, resource_discovery]},
   {mod, {sc_app, []}}
  ]}.

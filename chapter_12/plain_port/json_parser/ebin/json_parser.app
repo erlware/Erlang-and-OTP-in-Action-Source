@@ -7,7 +7,7 @@
              jp_sup,
              jp_server,
              json_parser]},
-  {registered, [jp_sup]},
+  {registered, [jp_sup, jp_server]},
   {applications, [kernel, stdlib]},
   {mod, {jp_app, []}}
  ]}.

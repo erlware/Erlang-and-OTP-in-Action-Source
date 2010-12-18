@@ -10,8 +10,8 @@
 
 -define(SERVER, ?MODULE).
 
-start_link(LSock) ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, [LSock]).
+start_link(Port) ->
+    supervisor:start_link({local, ?SERVER}, ?MODULE, [Port]).
 
 start_child() ->
     supervisor:start_child(?SERVER, []).
