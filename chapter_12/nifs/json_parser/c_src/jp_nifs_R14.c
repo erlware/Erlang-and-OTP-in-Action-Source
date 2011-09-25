@@ -155,7 +155,7 @@ static void add_element(state_t *st, ERL_NIF_TERM t)
 {
   container_t *c = st->c;
   if (c != NULL) {
-    if (c->count >= c->arraysz) {
+    if (c->count * sizeof(ERL_NIF_TERM) >= c->arraysz) {
       c->arraysz *= 2;
       c->array = enif_realloc(c->array, c->arraysz);
     }
@@ -266,6 +266,7 @@ static int handle_end(void *ctx, int array)
                                               c->count));
   }
   /* decallocate used container struct */
+  enif_free(c->array);
   enif_free(c);
   return 1;
 }
