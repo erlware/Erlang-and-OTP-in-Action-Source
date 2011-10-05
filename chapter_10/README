@@ -5,7 +5,7 @@ erlc -o ./resource_discovery/ebin ./resource_discovery/src/*.erl
 
 Then run the following (all on a single line) to generate the .boot file:
 
-erl -pa ./simple_cache/ebin -pa ./resource_discovery/ebin -eval 'systools:make_script("simple_cache", [local])' -s init stop
+erl -noshell -pa ./simple_cache/ebin -pa ./resource_discovery/ebin -eval 'systools:make_script("simple_cache", [local])' -s init stop
 
 First start one or two contact nodes. Ensure that the node names
 in the sys.config files match your host name, and/or use -sname

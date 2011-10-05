@@ -6,6 +6,10 @@ erlc -pa ./gen_web_server/ebin -o ./http_interface/ebin ./http_interface/src/*.e
 erlc -o ./simple_cache/ebin ./simple_cache/src/*.erl
 erlc -o ./resource_discovery/ebin ./resource_discovery/src/*.erl
 
+Then run the following (all on a single line) to generate the .boot file:
+
+erl -noshell -pa ./simple_cache/ebin -pa ./resource_discovery/ebin -eval 'systools:make_script("simple_cache", [local])' -s init stop
+
 Start the simple_cache system as in chapter 10 (including a contact node),
 but also including the paths to the ebin directories of tcp_interface,
 gen_web_server, and http_interface:
