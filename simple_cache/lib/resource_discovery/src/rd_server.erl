@@ -55,11 +55,11 @@ start_link() ->
 %%-------------------------------------------------------------------
 %% @doc Add a resource that is present on the local node that a
 %%      remote service will want to consume.
-%% @spec (Type::resource_type(), ResourceInstance::resource_instance()) -> ok
+%% @spec (Type::resource_type(), Resource::resource_instance()) -> ok
 %% @end
 %%-------------------------------------------------------------------
-add_local_resource(Type, Instance) ->
-    gen_server:cast(?SERVER, {add_local_resource, {Type, Instance}}).
+add_local_resource(Type, Resource) ->
+    gen_server:cast(?SERVER, {add_local_resource, {Type, Resource}}).
 
 %%-------------------------------------------------------------------
 %% @doc Add a type of resource that you wish to cache any remote
@@ -73,7 +73,7 @@ add_target_resource_type(Type) ->
 %%-------------------------------------------------------------------
 %% @doc Fetch all the resources for a particular resource instance
 %%      type.
-%% @spec (Type::resource_type()) -> {ok, [Instance::resource_instance]} | error
+%% @spec (Type::resource_type()) -> {ok, [Resource::resource_instance]} | error
 %% @end
 %%-------------------------------------------------------------------
 fetch_resources(Type) ->
@@ -82,11 +82,11 @@ fetch_resources(Type) ->
 %%-------------------------------------------------------------------
 %% @doc Delete a particular resource instance for a particular
 %%      resource type.
-%% @spec (Type::resource_type(), Instance::resource_instance()) -> ok
+%% @spec (Type::resource_type(), Resource::resource_instance()) -> ok
 %% @end
 %%-------------------------------------------------------------------
-delete_resource(Type, Instance) ->
-    gen_server:cast(?SERVER, {delete_resource, {Type, Instance}}).
+delete_resource(Type, Resource) ->
+    gen_server:cast(?SERVER, {delete_resource, {Type, Resource}}).
 
 %%-------------------------------------------------------------------
 %% @doc trade resources with all remote nodes
@@ -161,13 +161,13 @@ handle_cast({trade_resources, {ReplyToken, RemoteResources}}, State) ->
     end,
     {noreply, State#state{resources = NewResources}};
 
-handle_cast({add_local_resource, {Type, Instance}}, #state{local_resources = LocalResources} = State) ->
-    error_logger:info_msg("add local resource ~p~n", [{Type, Instance}]),
-    {noreply, State#state{local_resources = add_resource(Type, Instance, LocalResources)}};
+handle_cast({add_local_resource, {Type, Resource}}, #state{local_resources = LocalResources} = State) ->
+    error_logger:info_msg("add local resource ~p~n", [{Type, Resource}]),
+    {noreply, State#state{local_resources = add_resource(Type, Resource, LocalResources)}};
 handle_cast({add_target_resource_type, Type}, #state{target_resource_types = TargetTypes} = State) ->
     {noreply, State#state{target_resource_types = [Type|lists:delete(Type, TargetTypes)]}};
-handle_cast({delete_resource, {Type, Instance}}, #state{resources = Resources} = State) ->
-    {noreply, State#state{resources = delete_resource(Type, Instance, Resources)}}.
+handle_cast({delete_resource, {Type, Resource}}, #state{resources = Resources} = State) ->
+    {noreply, State#state{resources = delete_resource(Type, Resource, Resources)}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -239,7 +239,7 @@ return_resources_for_types(Types, Resources) ->
     Fun = 
 	fun(Type, Acc) ->
 		case dict:find(Type, Resources) of
-		    {ok, List}  -> [{Type, Instance} || Instance <- List] ++ Acc;
+		    {ok, List}  -> [{Type, Resource} || Resource <- List] ++ Acc;
 		    error       -> Acc
 		end
 	end,

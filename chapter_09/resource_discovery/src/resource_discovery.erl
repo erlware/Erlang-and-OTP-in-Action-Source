@@ -10,8 +10,8 @@
 add_target_resource_type(Type) ->
     rd_server:add_target_resource_type(Type).
 
-add_local_resource(Type, Instance) ->
-    rd_server:add_local_resource(Type, Instance).
+add_local_resource(Type, Resource) ->
+    rd_server:add_local_resource(Type, Resource).
 
 fetch_resources(Type) ->
     rd_server:fetch_resources(Type).

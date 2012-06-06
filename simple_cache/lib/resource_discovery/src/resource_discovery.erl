@@ -23,11 +23,11 @@
 %%-------------------------------------------------------------------
 %% @doc Add a resource that is present on the local node that a
 %%      remote service will want to consume.
-%% @spec (Type::resource_type(), ResourceInstance::resource_instance()) -> ok
+%% @spec (Type::resource_type(), Resource::resource_instance()) -> ok
 %% @end
 %%-------------------------------------------------------------------
-add_local_resource(Type, Instance) ->
-    rd_server:add_local_resource(Type, Instance).
+add_local_resource(Type, Resource) ->
+    rd_server:add_local_resource(Type, Resource).
 
 %%-------------------------------------------------------------------
 %% @doc Add a type of resource that you wish to cache any remote
@@ -41,7 +41,7 @@ add_target_resource_type(Type) ->
 %%-------------------------------------------------------------------
 %% @doc Fetch all the resources for a particular resource instance
 %%      type.
-%% @spec (Type::resource_type()) -> {ok, [Instance::resource_instance]} | error
+%% @spec (Type::resource_type()) -> {ok, [Resource::resource_instance]} | error
 %% @end
 %%-------------------------------------------------------------------
 fetch_resources(Type) ->
@@ -50,11 +50,11 @@ fetch_resources(Type) ->
 %%-------------------------------------------------------------------
 %% @doc Delete a particular resource instance for a particular
 %%      resource type.
-%% @spec (Type::resource_type(), Instance::resource_instance()) -> ok
+%% @spec (Type::resource_type(), Resource::resource_instance()) -> ok
 %% @end
 %%-------------------------------------------------------------------
-delete_resource(Type, Instance) ->
-    rd_server:delete_resource(Type, Instance).
+delete_resource(Type, Resource) ->
+    rd_server:delete_resource(Type, Resource).
 
 %%-------------------------------------------------------------------
 %% @doc trade resources with all remote nodes
