@@ -91,9 +91,6 @@ delete_schema() ->
 add_extra_nodes([Node|T]) ->
     case mnesia:change_config(extra_db_nodes, [Node]) of
         {ok, [Node]} ->
-            Res = mnesia:add_table_copy(schema, node(), ram_copies),
-            error_logger:info_msg("remote_init schema type ~p~n", [Res]),
-
             Res1 = mnesia:add_table_copy(key_to_pid, node(), ram_copies),
             error_logger:info_msg("remote_init add_table copy = ~p~n", [Res1]),
 
